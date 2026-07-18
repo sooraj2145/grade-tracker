@@ -5,7 +5,7 @@
 <html>
 
 <head>
-    <title>Students</title>
+    <title>Subjects</title>
 
     <jsp:include page="/common/imports.jsp"/>
 </head>
@@ -21,14 +21,14 @@
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">
-            <i class="bi bi-people-fill me-2"></i>
-            Student List
+            <i class="bi bi-journal-bookmark-fill me-2"></i>
+            Subjects
         </h2>
 
-        <a href="${pageContext.request.contextPath}/students?action=new"
+        <a href="${pageContext.request.contextPath}/subjects?action=new"
            class="btn btn-success">
             <i class="bi bi-plus-circle"></i>
-            Add Student
+            Add Subject
         </a>
     </div>
 
@@ -39,7 +39,7 @@
 
             <form
                     method="get"
-                    action="${pageContext.request.contextPath}/students"
+                    action="${pageContext.request.contextPath}/subjects"
                     class="row g-2">
                 <input
                         type="hidden"
@@ -57,7 +57,7 @@
                             class="form-control"
                             name="keyword"
                             value="${keyword}"
-                            placeholder="Search by name, email or department...">
+                            placeholder="Search by subject code, name,...">
                 </div>
 
                 <div class="col-auto">
@@ -76,7 +76,7 @@
                 <div class="col-auto">
 
                     <a
-                            href="${pageContext.request.contextPath}/students"
+                            href="${pageContext.request.contextPath}/subjects"
                             class="btn btn-outline-secondary">
 
                         Clear
@@ -104,7 +104,7 @@
 
     </c:if>
 
-    <!-- Student Table -->
+    <!-- Subject Table -->
     <div class="card shadow-sm">
 
         <div class="card-body p-0">
@@ -119,19 +119,19 @@
                     <c:set var="idNextDirection" value="desc" />
                 </c:if>
 
-                <c:set var="nameNextDirection" value="asc"/>
-                <c:if test="${sortBy == 'first_name' && direction == 'asc'}">
-                   <c:set var="nameNextDirection" value="desc" />
+                <c:set var="codeNextDirection" value="asc"/>
+                <c:if test="${sortBy == 'code' && direction == 'asc'}">
+                   <c:set var="codeNextDirection" value="desc" />
                 </c:if>
 
-                 <c:set var="emailNextDirection" value="asc"/>
-                 <c:if test="${sortBy == 'email' && direction == 'asc'}">
-                    <c:set var="emailNextDirection" value="desc" />
+                 <c:set var="nameNextDirection" value="asc"/>
+                 <c:if test="${sortBy == 'name' && direction == 'asc'}">
+                    <c:set var="nameNextDirection" value="desc" />
                  </c:if>
 
-                  <c:set var="departmentNextDirection" value="asc"/>
-                                 <c:if test="${sortBy == 'department' && direction == 'asc'}">
-                                    <c:set var="departmentNextDirection" value="desc" />
+                  <c:set var="creditsNextDirection" value="asc"/>
+                                 <c:if test="${sortBy == 'credits' && direction == 'asc'}">
+                                    <c:set var="creditsNextDirection" value="desc" />
                                  </c:if>
 
                    <c:set var="semesterNextDirection" value="asc"/>
@@ -140,7 +140,7 @@
                                   </c:if>
 
                 <tr>
-                    <c:url var="idSortUrl" value="/students">
+                    <c:url var="idSortUrl" value="/subjects">
                         <c:param name="page" value="1"/>
                         <c:param name="keyword" value="${keyword}"/>
                         <c:param name="sortBy" value="id"/>
@@ -165,10 +165,10 @@
                      </th>
                     <th>
                         <a
-                            href="${pageContext.request.contextPath}/students?page=1&keyword=${keyword}&sortBy=first_name&direction=${nameNextDirection}"
+                            href="${pageContext.request.contextPath}/subjects?page=1&keyword=${keyword}&sortBy=code&direction=${codeNextDirection}"
                             class="text-decoration-none text-white">
-                            Name
-                            <c:if test="${sortBy == 'first_name'}">
+                            Code
+                            <c:if test="${sortBy == 'code'}">
                                 <c:choose>
                                     <c:when test="${direction == 'asc'}">
                                          ▲
@@ -182,10 +182,10 @@
                     </th>
                     <th>
                          <a
-                             href="${pageContext.request.contextPath}/students?page=1&keyword=${keyword}&sortBy=email&direction=${emailNextDirection}"
+                             href="${pageContext.request.contextPath}/subjects?page=1&keyword=${keyword}&sortBy=name&direction=${nameNextDirection}"
                                class="text-decoration-none text-white">
-                                Email
-                                  <c:if test="${sortBy == 'email'}">
+                                Name
+                                  <c:if test="${sortBy == 'name'}">
                                    <c:choose>
                                    <c:when test="${direction == 'asc'}">
                                          ▲
@@ -199,10 +199,10 @@
                     </th>
                     <th>
                         <a
-                           href="${pageContext.request.contextPath}/students?page=1&keyword=${keyword}&sortBy=department&direction=${departmentNextDirection}"
+                           href="${pageContext.request.contextPath}/subjects?page=1&keyword=${keyword}&sortBy=credits&direction=${creditsNextDirection}"
                            class="text-decoration-none text-white">
-                           Department
-                          <c:if test="${sortBy == 'department'}">
+                           Credits
+                          <c:if test="${sortBy == 'credits'}">
                              <c:choose>
                                <c:when test="${direction == 'asc'}">
                                                   ▲
@@ -216,7 +216,7 @@
                     </th>
                     <th class="text-center">
                         <a
-                             href="${pageContext.request.contextPath}/students?page=1&keyword=${keyword}&sortBy=semester&direction=${semesterNextDirection}"
+                             href="${pageContext.request.contextPath}/subjects?page=1&keyword=${keyword}&sortBy=semester&direction=${semesterNextDirection}"
                                class="text-decoration-none text-white">
                                   Semester
                           <c:if test="${sortBy == 'semester'}">
@@ -240,31 +240,30 @@
 
                 <c:choose>
 
-                    <c:when test="${not empty students}">
+                    <c:when test="${not empty subjects}">
 
-                        <c:forEach items="${students}" var="student">
+                        <c:forEach items="${subjects}" var="subject">
 
                             <tr>
 
                                 <td class="text-center">
-                                    ${student.id}
+                                    ${subject.id}
                                 </td>
 
                                 <td>
-                                    ${student.firstName}
-                                    ${student.lastName}
+                                    ${subject.code}
                                 </td>
 
                                 <td>
-                                    ${student.email}
+                                    ${subject.name}
                                 </td>
 
                                 <td>
-                                    ${student.department}
+                                    ${subject.credits}
                                 </td>
 
                                 <td class="text-center">
-                                    ${student.semester}
+                                    ${subject.semester}
                                 </td>
 
                                 <td>
@@ -272,7 +271,7 @@
                                     <div class="d-flex justify-content-center gap-2">
 
                                         <a
-                                                href="${pageContext.request.contextPath}/students?action=edit&id=${student.id}&keyword=${keyword}&page=${currentPage}&sortBy=${sortBy}&direction=${direction}"
+                                                href="${pageContext.request.contextPath}/subjects?action=edit&id=${subject.id}&keyword=${keyword}&page=${currentPage}&sortBy=${sortBy}&direction=${direction}"
                                                 class="btn btn-warning btn-sm">
 
                                             <i class="bi bi-pencil-square"></i>
@@ -281,9 +280,9 @@
                                         </a>
 
                                         <a
-                                                href="${pageContext.request.contextPath}/students?action=delete&id=${student.id}&keyword=${keyword}&page=${currentPage}&sortBy=${sortBy}&direction=${direction}"
+                                                href="${pageContext.request.contextPath}/subjects?action=delete&id=${subject.id}&keyword=${keyword}&page=${currentPage}&sortBy=${sortBy}&direction=${direction}"
                                                 class="btn btn-danger btn-sm"
-                                                onclick="return confirm('Are you sure you want to delete this student?')">
+                                                onclick="return confirm('Are you sure you want to delete this subject?')">
 
                                             <i class="bi bi-trash"></i>
                                             Delete
@@ -315,7 +314,7 @@
                                         <c:when test="${not empty keyword}">
 
                                             <h5>
-                                                No students found matching
+                                                No subjects found matching
                                                 "<strong>${keyword}</strong>"
                                             </h5>
 
@@ -328,11 +327,11 @@
                                         <c:otherwise>
 
                                             <h5>
-                                                No students found.
+                                                No subjects found.
                                             </h5>
 
                                             <p class="text-muted mb-0">
-                                                Click <strong>Add Student</strong> to create your first student.
+                                                Click <strong>Add Subject</strong> to create your first subject.
                                             </p>
 
                                         </c:otherwise>
@@ -362,7 +361,7 @@
     <nav aria-label="page navigation" class="mt-4">
             <ul class="pagination justify-content-center">
                 <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                      <a class="page-link" href="${pageContext.request.contextPath}/students?page=${currentPage - 1}&keyword=${keyword}&sortBy=${sortBy}&direction=${direction}" aria-label="Previous">
+                      <a class="page-link" href="${pageContext.request.contextPath}/subjects?page=${currentPage - 1}&keyword=${keyword}&sortBy=${sortBy}&direction=${direction}" aria-label="Previous">
                         <span aria-hidden="true">&laquo;</span>
                       </a>
                  </li>
@@ -371,13 +370,13 @@
                             var="page">
 
                   <li class="page-item ${page == currentPage ? 'active' : ''}">
-                    <a class="page-link" href="${pageContext.request.contextPath}/students?page=${page}&keyword=${keyword}&sortBy=${sortBy}&direction=${direction}" aria-label="page link">
+                    <a class="page-link" href="${pageContext.request.contextPath}/subjects?page=${page}&keyword=${keyword}&sortBy=${sortBy}&direction=${direction}" aria-label="page link">
                             ${page}
                       </a>
                   </li>
                   </c:forEach>
                   <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                       <a class="page-link" href="${pageContext.request.contextPath}/students?page=${currentPage + 1}&keyword=${keyword}&sortBy=${sortBy}&direction=${direction}" aria-label="Next">
+                       <a class="page-link" href="${pageContext.request.contextPath}/subjects?page=${currentPage + 1}&keyword=${keyword}&sortBy=${sortBy}&direction=${direction}" aria-label="Next">
                          <span aria-hidden="true">&raquo;</span>
                        </a>
                   </li>

@@ -1,6 +1,5 @@
 package com.gradetracker.controller;
 
-import com.gradetracker.dao.StudentDAO;
 import com.gradetracker.model.Student;
 import com.gradetracker.service.StudentService;
 import com.gradetracker.validator.StudentValidator;
@@ -15,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @WebServlet("/students")
-public class StudentServlet extends HttpServlet {
+public class StudentServlet extends BaseServlet {
 
     private static final String ACTION_NEW = "new";
     private static final String ACTION_UPDATE = "update";
@@ -24,7 +23,6 @@ public class StudentServlet extends HttpServlet {
     private static final String ACTION_LIST = "list";
     private static final String ACTION_INSERT = "insert";
 
-    private static final int PAGE_SIZE = 10;
 
     private StudentService studentService;
 
@@ -58,14 +56,12 @@ public class StudentServlet extends HttpServlet {
         String sortBy = getSortBy(req);
         String direction = getSortDirection(req);
 
-        boolean searching = keyword != null && !keyword.isBlank();
+
 
         int currentPage = getCurrentPage(req);
         int offset = (currentPage - 1) * PAGE_SIZE;
 
-        int totalStudents = searching
-                ? studentService.getStudentCount(keyword)
-                : studentService.getStudentCount();
+        int totalStudents = studentService.getStudentCount(keyword);
 
         int totalPages = Math.max(
                 1,
@@ -89,36 +85,43 @@ public class StudentServlet extends HttpServlet {
 
         showSuccessMessage(req);
 
-        req.getRequestDispatcher("/students/student-list.jsp")
-                .forward(req, resp);
+        forwardToStudentList(req, resp);
     }
 
     private void showNewForm(HttpServletRequest req,
                              HttpServletResponse resp)
             throws ServletException, IOException {
 
-        req.getRequestDispatcher("/students/student-form.jsp")
-                .forward(req, resp);
+        forwardToForm(req, resp);
     }
 
     private void showEditForm(HttpServletRequest req,
                               HttpServletResponse resp)
             throws ServletException, IOException {
 
-        int id = Integer.parseInt(req.getParameter("id"));
+        Integer id = parseInteger(req.getParameter("id"));
+
+        if(id == null){
+            redirectToStudentList(req, resp);
+            return;
+        }
 
         req.setAttribute("keyword", req.getParameter("keyword"));
         req.setAttribute("student", studentService.getStudentById(id));
 
-        req.getRequestDispatcher("/students/student-form.jsp")
-                .forward(req, resp);
+        forwardToForm(req, resp);
     }
 
     private void deleteStudent(HttpServletRequest req,
                                HttpServletResponse resp)
             throws IOException {
 
-        int id = Integer.parseInt(req.getParameter("id"));
+        Integer id = parseInteger(req.getParameter("id"));
+
+        if(id == null){
+            redirectToStudentList(req, resp);
+            return;
+        }
 
         if (studentService.deleteStudent(id)) {
 
@@ -165,8 +168,7 @@ public class StudentServlet extends HttpServlet {
             req.setAttribute("student", student);
             req.setAttribute("errors", errors);
 
-            req.getRequestDispatcher("/students/student-form.jsp")
-                    .forward(req, resp);
+            forwardToForm(req, resp);
 
             return;
         }
@@ -175,7 +177,7 @@ public class StudentServlet extends HttpServlet {
 
             addSuccessMessage(req, "Student added successfully.");
 
-            resp.sendRedirect(req.getContextPath() + "/students");
+            redirectToStudentList(req, resp);
 
         } else {
 
@@ -192,7 +194,18 @@ public class StudentServlet extends HttpServlet {
 
         Student student = buildStudentFromRequest(req);
 
-        student.setId(Integer.parseInt(req.getParameter("id")));
+        student.setId(parseInteger(req.getParameter("id")));
+
+        Map<String, String> errors = StudentValidator.validate(student);
+
+        if (!errors.isEmpty()) {
+
+            preserveListState(req);
+            req.setAttribute("student", student);
+            req.setAttribute("errors", errors);
+            forwardToForm(req, resp);
+            return;
+        }
 
         if (studentService.updateStudent(student)) {
 
@@ -219,7 +232,7 @@ public class StudentServlet extends HttpServlet {
         student.setEmail(req.getParameter("email"));
         student.setDepartment(req.getParameter("department"));
         student.setSemester(
-                Integer.parseInt(req.getParameter("semester"))
+                parseInteger(req.getParameter("semester"))
         );
 
         return student;
@@ -264,51 +277,6 @@ public class StudentServlet extends HttpServlet {
         resp.sendRedirect(url.toString());
     }
 
-    private void addSuccessMessage(HttpServletRequest req,
-                                   String message) {
-
-        if (message == null || message.isBlank()) {
-            return;
-        }
-
-        HttpSession session = req.getSession();
-        session.setAttribute("successMessage", message);
-    }
-
-    private void showSuccessMessage(HttpServletRequest req) {
-
-        HttpSession session = req.getSession();
-
-        String successMessage =
-                (String) session.getAttribute("successMessage");
-
-        if (successMessage != null) {
-
-            req.setAttribute("successMessage", successMessage);
-            session.removeAttribute("successMessage");
-        }
-    }
-
-    private int getCurrentPage(HttpServletRequest req) {
-
-        String page = req.getParameter("page");
-
-        if (page == null || page.isBlank()) {
-            return 1;
-        }
-
-        try {
-
-            int currentPage = Integer.parseInt(page);
-
-            return Math.max(currentPage, 1);
-
-        } catch (NumberFormatException e) {
-
-            return 1;
-        }
-    }
-
     private String getSortBy(HttpServletRequest req) {
         String sortBy = req.getParameter("sortBy");
         if (sortBy == null || sortBy.isBlank()) {
@@ -328,16 +296,19 @@ public class StudentServlet extends HttpServlet {
 
     }
 
-    private String getSortDirection(HttpServletRequest req) {
-        String direction =  req.getParameter("direction");
-        if (direction == null || direction.isBlank()) {
-            return "asc";
-        }
+    private void forwardToForm(HttpServletRequest req,
+                               HttpServletResponse resp)
+            throws ServletException, IOException {
 
-       return switch (direction) {
-            case "asc",
-                 "desc" -> direction;
-            default -> "asc";
-        };
+        req.getRequestDispatcher("/students/student-form.jsp")
+                .forward(req, resp);
     }
+
+    private void forwardToStudentList(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, ServletException {
+        req.getRequestDispatcher("/students/student-list.jsp")
+                .forward(req, resp);
+    }
+
+
 }

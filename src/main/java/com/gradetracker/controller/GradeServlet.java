@@ -1,16 +1,16 @@
 package com.gradetracker.controller;
 
-import com.gradetracker.dao.GradeDAO;
-import com.gradetracker.dao.StudentDAO;
-import com.gradetracker.dao.SubjectDAO;
+
 import com.gradetracker.model.Grade;
-import com.gradetracker.model.Student;
-import com.gradetracker.model.Subject;
-import com.gradetracker.util.GradeUtil;
+
+import com.gradetracker.service.GradeService;
+import com.gradetracker.service.StudentService;
+import com.gradetracker.service.SubjectService;
+
 import com.gradetracker.validator.GradeValidator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -19,13 +19,20 @@ import java.util.List;
 import java.util.Map;
 
 @WebServlet("/grades")
-public class GradeServlet extends HttpServlet{
+public class GradeServlet extends BaseServlet{
 
-    private static final int PAGE_SIZE = 10;
+    private static final String ACTION_NEW = "new";
+    private static final String ACTION_EDIT = "edit";
+    private static final String ACTION_DELETE = "delete";
+    private static final String ACTION_INSERT = "insert";
+    private static final String ACTION_UPDATE = "update";
+    private static final String ACTION_LIST = "list";
 
-    private GradeDAO gradeDAO;
-    private StudentDAO studentDAO;
-    private SubjectDAO subjectDAO;
+
+
+    private GradeService gradeService;
+    private StudentService studentService;
+    private SubjectService subjectService;
     private GradeValidator validator;
 
     @Override
@@ -33,16 +40,16 @@ public class GradeServlet extends HttpServlet{
 
         super.init();
 
-        gradeDAO = new GradeDAO();
-        studentDAO = new StudentDAO();
-        subjectDAO = new SubjectDAO();
+        gradeService = new GradeService();
+        studentService = new StudentService();
+        subjectService = new SubjectService();
         validator = new GradeValidator();
     }
 
     @Override
     protected void doGet(HttpServletRequest req,
                          HttpServletResponse resp)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         String action = req.getParameter("action");
 
         if(action == null){
@@ -50,183 +57,156 @@ public class GradeServlet extends HttpServlet{
         }
 
         switch(action){
-            case "new" -> showNewForm(req,resp);
-            case "edit" -> showForm(req,resp);
-            case "delete" -> deleteGrade(req,resp);
+            case ACTION_NEW -> showNewForm(req,resp);
+            case ACTION_EDIT -> showEditForm(req,resp);
+            case ACTION_DELETE -> deleteGrade(req,resp);
             default -> listGrades(req, resp);
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         String action = req.getParameter("action");
         if(action == null){
-            action = "";
+            action = ACTION_LIST;
         }
         switch(action){
-            case "insert" -> insertGrade(req,resp);
-            case "update" -> updateGrade(req,resp);
+            case ACTION_INSERT -> insertGrade(req,resp);
+            case ACTION_UPDATE -> updateGrade(req,resp);
             default -> resp.sendRedirect(req.getContextPath() + "/grades");
         }
     }
 
     private void listGrades(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        int page = 1;
-
-        try {
-            page = Integer.parseInt(req.getParameter("page"));
-
-        } catch (Exception ignored) {
-
-
-        }
+        int currentPage = getCurrentPage(req);
 
         String keyword = req.getParameter("keyword");
         if(keyword == null){
             keyword = "";
         }
 
-        String sortBy = req.getParameter("sortBy");
-        if(sortBy == null || sortBy.isBlank()){
-            sortBy = "id";
-        }
+        String sortBy = getSortBy(req);
 
-        String direction = req.getParameter("direction");
-        if(direction == null || direction.isBlank()){
-            direction = "asc";
-        }
+        String direction = getSortDirection(req);
 
-        int offset = (page - 1) * PAGE_SIZE;
+        int offset = (currentPage - 1) * PAGE_SIZE;
 
-        List<Grade> grades;
-        int totalRecords;
+        List<Grade> grades = gradeService.getGrades(
+                offset,
+                PAGE_SIZE,
+                keyword,
+                sortBy,
+                direction
+        );
+        int totalRecords =  gradeService.getGradesCount(keyword);
 
-        if(keyword.isBlank()){
-            grades = gradeDAO.getGrades(
-                    offset,
-                    PAGE_SIZE,
-                    sortBy,
-                    direction
-            );
-            totalRecords = gradeDAO.getGradeCount();
-        } else {
-            grades = gradeDAO.searchGrades(
-                    keyword,
-                    offset,
-                    PAGE_SIZE,
-                    sortBy,
-                    direction
-            );
 
-            totalRecords = gradeDAO.getGradeCount(keyword);
-        }
-
-        int totalPages = (int) Math.ceil((double)totalRecords / PAGE_SIZE);
+        int totalPages = Math.max(1,
+                (int)Math.ceil((double)totalRecords / (double)PAGE_SIZE));
 
         req.setAttribute("grades", grades);
-        req.setAttribute("currentPage", page);
+        req.setAttribute("currentPage", currentPage);
         req.setAttribute("totalPages", totalPages);
         req.setAttribute("keyword", keyword);
         req.setAttribute("sortBy", sortBy);
         req.setAttribute("direction", direction);
 
-        req.getRequestDispatcher("/grades/grade-list.jsp").forward(req, resp);
+        showSuccessMessage(req);
+        showErrorMessage(req);
+        forwardToGradeList(req, resp);
 
 
     }
 
     private void showNewForm(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
 
-        loadDropdowns(req);
-
-        req.getRequestDispatcher("/grades/grade-form.jsp").forward(req, resp);
+        forwardToForm(req, resp);
     }
 
-    private void showForm(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Integer id = Integer.parseInt(req.getParameter("id"));
+    private void showEditForm(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        Integer id = parseInteger(req.getParameter("id"));
 
-        Grade grade = gradeDAO.getGradeById(id);
-
-        if(grade == null){
-            resp.sendRedirect(req.getContextPath() + "/grades");
+        if(id == null){
+            redirectToGradeList(req, resp);
             return;
         }
 
+        Grade grade = gradeService.getGradeById(id);
 
-
+        if(grade == null){
+            redirectToGradeList(req, resp);
+            return;
+        }
         req.setAttribute("grade",  grade);
 
-        loadDropdowns(req);
-
-        req.getRequestDispatcher("/grades/grade-form.jsp").forward(req, resp);
+        forwardToForm(req, resp);
     }
 
     private void insertGrade(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Integer studentId = Integer.parseInt(req.getParameter("studentId"));
-        Integer subjectId = Integer.parseInt(req.getParameter("subjectId"));
-        double marks =  Double.parseDouble(req.getParameter("marks"));
 
-        String remarks = req.getParameter("remarks");
+        Grade grade = buildGradeFromRequest(req);
 
-        Grade grade = new Grade();
-
-        grade.setStudentId(studentId);
-        grade.setSubjectId(subjectId);
-        grade.setMarks(marks);
-        grade.setGrade(GradeUtil.calculateGrade(marks));
-        grade.setRemarks(remarks);
-
-        Map<String, String> errors = validator.validate(grade);
-        if(!errors.isEmpty()){
-           forwardToForm(req, resp, grade, errors);
-           return;
-
-        }
-        gradeDAO.addGrade(grade);
-
-        resp.sendRedirect(req.getContextPath() + "/grades");
-
+        saveGrade(req, resp, grade, false);
 
     }
 
     private void updateGrade(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        Integer id = Integer.parseInt(req.getParameter("id"));
-        Integer studentId = Integer.parseInt(req.getParameter("studentId"));
-        Integer subjectId = Integer.parseInt(req.getParameter("subjectId"));
-        Double marks =  Double.parseDouble(req.getParameter("marks"));
-        String remarks = req.getParameter("remarks");
+        Integer id = parseInteger(req.getParameter("id"));
 
-        Grade grade = new Grade();
+        if(id == null){
+            redirectToGradeList(req, resp);
+            return;
+        }
+
+        Grade grade = buildGradeFromRequest(req);
 
         grade.setId(id);
-        grade.setStudentId(studentId);
-        grade.setSubjectId(subjectId);
-        grade.setMarks(marks);
-        grade.setGrade(GradeUtil.calculateGrade(marks));
-        grade.setRemarks(remarks);
+
+        saveGrade(req, resp, grade, true);
+
+    }
+
+    private void saveGrade(HttpServletRequest req,
+                           HttpServletResponse resp,
+                           Grade grade,
+                           boolean isUpdate)
+            throws ServletException, IOException {
 
         Map<String, String> errors = validator.validate(grade);
 
         if(!errors.isEmpty()){
+            preserveListState(req);
             forwardToForm(req, resp, grade, errors);
             return;
         }
-        gradeDAO.updateGrade(grade);
-        resp.sendRedirect(req.getContextPath() + "/grades");
 
+        if(isUpdate){
+            gradeService.updateGrade(grade);
+            addSuccessMessage(req, "Grade updated successfully");
+        } else {
+            gradeService.addGrade(grade);
+            addSuccessMessage(req,"Grade added successfully");
+        }
 
-
-
+        redirectToGradeList(req, resp);
     }
 
     private void deleteGrade(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
-        Integer id = Integer.parseInt(req.getParameter("id"));
+        Integer id = parseInteger(req.getParameter("id"));
 
-        gradeDAO.deleteGradeById(id);
-        resp.sendRedirect(req.getContextPath() + "/grades");
+        if(id == null){
+            redirectToGradeList(req, resp);
+            return;
+        }
+
+        gradeService.deleteGrade(id);
+
+        addSuccessMessage(req, "Grade deleted successfully");
+
+        redirectToGradeList(req, resp);
     }
 
 
@@ -234,8 +214,8 @@ public class GradeServlet extends HttpServlet{
 
     private void loadDropdowns(HttpServletRequest req){
 
-        req.setAttribute("students", studentDAO.getAllStudents());
-        req.setAttribute("subjects", subjectDAO.getAllSubjects());
+        req.setAttribute("students", studentService.getAllStudents());
+        req.setAttribute("subjects", subjectService.getAllSubjects());
     }
 
 
@@ -248,6 +228,13 @@ public class GradeServlet extends HttpServlet{
         req.setAttribute("grade", grade);
         req.setAttribute("errors", errors);
 
+        forwardToForm(req, resp);
+    }
+
+    private void forwardToForm(HttpServletRequest req,
+                               HttpServletResponse resp)
+            throws ServletException, IOException {
+
         loadDropdowns(req);
 
         req.getRequestDispatcher("/grades/grade-form.jsp")
@@ -257,6 +244,54 @@ public class GradeServlet extends HttpServlet{
 
 
 
+    private Grade buildGradeFromRequest(HttpServletRequest req){
+        Grade grade = new Grade();
+
+        grade.setStudentId(parseInteger(req.getParameter("studentId")));
+        grade.setSubjectId(parseInteger(req.getParameter("subjectId")));
+
+        String marks = req.getParameter("marks");
+
+        if(marks != null && !marks.isBlank()){
+            grade.setMarks(Double.parseDouble(marks));
+        }
+
+        grade.setRemarks(req.getParameter("remarks"));
+
+        return grade;
+    }
+
+    private String getSortBy(HttpServletRequest req) {
+
+        String sortBy = req.getParameter("sortBy");
+
+        if (sortBy == null || sortBy.isBlank()) {
+            return "id";
+        }
+
+        return switch (sortBy) {
+            case "id",
+                 "student_name",
+                 "subject_name",
+                 "marks",
+                 "grade"
+                    -> sortBy;
+
+            default -> "id";
+        };
+    }
 
 
+
+    private void redirectToGradeList(HttpServletRequest req,
+                                     HttpServletResponse resp)
+            throws IOException {
+
+        resp.sendRedirect(req.getContextPath() + "/grades");
+    }
+
+    private void forwardToGradeList(HttpServletRequest req, HttpServletResponse resp)
+        throws ServletException, IOException {
+        req.getRequestDispatcher("/grades/grade-list.jsp").forward(req, resp);
+    }
 }

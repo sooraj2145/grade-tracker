@@ -121,6 +121,25 @@ public class StudentDAO {
         return students;
     }
 
+    public List<Student> getAllStudents() {
+        List<Student> students = new ArrayList<>();
+        String sql = """
+                SELECT * FROM students ORDER BY first_name, last_name;
+        """;
+        try(Connection conn = DBUtil.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery()){
+
+            while(rs.next()){
+                students.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return students;
+    }
+
     public boolean updateStudent(Student student) {
 
         String sql = """

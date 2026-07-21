@@ -2,6 +2,7 @@ package com.gradetracker.controller;
 
 import com.gradetracker.dao.StudentDAO;
 import com.gradetracker.model.Student;
+import com.gradetracker.service.StudentService;
 import com.gradetracker.validator.StudentValidator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,11 +26,11 @@ public class StudentServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 10;
 
-    private StudentDAO studentDAO;
+    private StudentService studentService;
 
     @Override
     public void init() {
-        studentDAO = new StudentDAO();
+        studentService = new StudentService();
     }
 
     @Override
@@ -63,17 +64,21 @@ public class StudentServlet extends HttpServlet {
         int offset = (currentPage - 1) * PAGE_SIZE;
 
         int totalStudents = searching
-                ? studentDAO.getStudentCount(keyword)
-                : studentDAO.getStudentCount();
+                ? studentService.getStudentCount(keyword)
+                : studentService.getStudentCount();
 
         int totalPages = Math.max(
                 1,
                 (int) Math.ceil((double) totalStudents / PAGE_SIZE)
         );
 
-        List<Student> students = searching
-                ? studentDAO.searchStudents(keyword, offset, PAGE_SIZE,sortBy, direction)
-                : studentDAO.getStudents(offset, PAGE_SIZE, sortBy, direction);
+        List<Student> students = studentService.getStudents(
+                offset,
+                PAGE_SIZE,
+                keyword,
+                sortBy,
+                direction
+        );
 
         req.setAttribute("keyword", keyword);
         req.setAttribute("sortBy", sortBy);
@@ -103,7 +108,7 @@ public class StudentServlet extends HttpServlet {
         int id = Integer.parseInt(req.getParameter("id"));
 
         req.setAttribute("keyword", req.getParameter("keyword"));
-        req.setAttribute("student", studentDAO.getStudentById(id));
+        req.setAttribute("student", studentService.getStudentById(id));
 
         req.getRequestDispatcher("/students/student-form.jsp")
                 .forward(req, resp);
@@ -115,7 +120,7 @@ public class StudentServlet extends HttpServlet {
 
         int id = Integer.parseInt(req.getParameter("id"));
 
-        if (studentDAO.deleteStudentById(id)) {
+        if (studentService.deleteStudent(id)) {
 
             addSuccessMessage(req, "Student deleted successfully.");
 
@@ -166,7 +171,7 @@ public class StudentServlet extends HttpServlet {
             return;
         }
 
-        if (studentDAO.addStudent(student)) {
+        if (studentService.addStudent(student)) {
 
             addSuccessMessage(req, "Student added successfully.");
 
@@ -189,7 +194,7 @@ public class StudentServlet extends HttpServlet {
 
         student.setId(Integer.parseInt(req.getParameter("id")));
 
-        if (studentDAO.updateStudent(student)) {
+        if (studentService.updateStudent(student)) {
 
             addSuccessMessage(req, "Student updated successfully.");
 

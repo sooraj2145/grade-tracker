@@ -1,0 +1,4 @@
+package com.gradetracker.service;
+
+public class GradeService {
+}

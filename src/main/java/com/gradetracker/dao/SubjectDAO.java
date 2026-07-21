@@ -86,6 +86,24 @@ public class SubjectDAO {
         return subjects;
     }
 
+    public List<Subject> getAllSubjects() {
+        List<Subject> subjects = new ArrayList<>();
+        String sql = """
+                    SELECT *  FROM subjects ORDER BY name; 
+                """;
+        try(Connection conn = DBUtil.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery()){
+
+            while(rs.next()){
+                subjects.add(mapRow(rs));
+            }
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
+        return subjects;
+    }
+
     public boolean updateSubject(Subject subject) {
         String sql = """
                 UPDATE subjects 

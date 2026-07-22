@@ -84,7 +84,7 @@ public class StudentServlet extends BaseServlet {
         req.setAttribute("totalPages", totalPages);
 
         showSuccessMessage(req);
-
+        showErrorMessage(req);
         forwardToStudentList(req, resp);
     }
 

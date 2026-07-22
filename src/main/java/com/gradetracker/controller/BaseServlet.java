@@ -1,5 +1,6 @@
 package com.gradetracker.controller;
 
+import com.gradetracker.model.User;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -103,6 +104,29 @@ public abstract class BaseServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    protected HttpSession getSession(HttpServletRequest req) {
+        return req.getSession();
+    }
+
+    protected HttpSession getSession(HttpServletRequest req,
+                                     boolean create) {
+        return req.getSession(create);
+    }
+
+    protected User getLoggedInUser(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+
+        if (session == null) {
+            return null;
+        }
+
+        return (User) session.getAttribute("loggedInUser");
+    }
+
+    protected boolean isLoggedIn(HttpServletRequest req) {
+        return getLoggedInUser(req) != null;
     }
 
 

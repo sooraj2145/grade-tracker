@@ -1,5 +1,7 @@
 package com.gradetracker.model;
 
+import com.gradetracker.enums.Role;
+
 import java.sql.Timestamp;
 
 public class User {
@@ -8,7 +10,7 @@ public class User {
     private String password;
     private String fullName;
     private String email;
-    private String role;
+    private Role role;
     private Boolean active;
     private Timestamp createdAt;
     private Timestamp updatedAt;
@@ -16,7 +18,7 @@ public class User {
 
     public User() {}
 
-    public User(Integer id, String username, String password, String fullName, String email, String role, Boolean active, java.sql.Timestamp createdAt, Timestamp updatedAt) {
+    public User(Integer id, String username, String password, String fullName, String email, Role role, Boolean active, java.sql.Timestamp createdAt, Timestamp updatedAt) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -68,11 +70,11 @@ public class User {
         this.email = email;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
@@ -98,6 +100,18 @@ public class User {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
+
+    public boolean isFaculty() {
+        return role == Role.FACULTY;
+    }
+
+    public boolean isStudent() {
+        return role == Role.STUDENT;
     }
 
     @Override

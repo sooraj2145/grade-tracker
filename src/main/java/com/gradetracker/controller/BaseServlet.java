@@ -4,6 +4,8 @@ import com.gradetracker.model.User;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import com.gradetracker.enums.Role;
+import com.gradetracker.model.User;
 
 public abstract class BaseServlet extends HttpServlet {
 
@@ -128,6 +130,16 @@ public abstract class BaseServlet extends HttpServlet {
     protected boolean isLoggedIn(HttpServletRequest req) {
         return getLoggedInUser(req) != null;
     }
+
+    protected boolean hasRole(HttpServletRequest req, Role role) {
+
+        User user = getLoggedInUser(req);
+
+        return user != null && user.getRole() == role;
+    }
+
+
+
 
 
 }

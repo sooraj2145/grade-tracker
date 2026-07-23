@@ -7,7 +7,7 @@ import com.gradetracker.service.GradeService;
 import com.gradetracker.service.StudentService;
 import com.gradetracker.service.SubjectService;
 
-import com.gradetracker.validator.GradeValidator;
+import com.gradetracker.validation.GradeValidator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 

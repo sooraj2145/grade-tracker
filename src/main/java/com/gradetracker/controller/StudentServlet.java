@@ -2,7 +2,7 @@ package com.gradetracker.controller;
 
 import com.gradetracker.model.Student;
 import com.gradetracker.service.StudentService;
-import com.gradetracker.validator.StudentValidator;
+import com.gradetracker.validation.StudentValidator;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;

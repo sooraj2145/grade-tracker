@@ -1,4 +1,4 @@
-package com.gradetracker.validator;
+package com.gradetracker.validation;
 
 import com.gradetracker.model.Student;
 

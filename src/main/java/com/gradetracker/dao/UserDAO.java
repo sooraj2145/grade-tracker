@@ -10,7 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
+
 
 public class UserDAO {
 
@@ -62,6 +62,7 @@ public class UserDAO {
         String  sql = """
                 SELECT *
                 FROM users
+                WHERE is_active = true
                 ORDER BY id
         """;
 

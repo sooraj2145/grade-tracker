@@ -216,7 +216,7 @@ public class UserServlet extends BaseServlet {
                                                  String message)
             throws ServletException, IOException {
 
-        addErrorMessage(req, message);
+        req.setAttribute("errorMessage", message);
 
         req.setAttribute("user", userService.getUserById(userId));
 
